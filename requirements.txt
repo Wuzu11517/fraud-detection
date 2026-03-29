@@ -1,0 +1,13 @@
+# Core data science
+pandas==2.2.3
+numpy==2.2.1
+
+# Machine learning
+scikit-learn==1.6.1
+xgboost==2.1.4
+
+# Autoencoder (upcoming step)
+torch==2.6.0
+
+# Streaming & feature store (upcoming steps)
+redis==5.2.1
