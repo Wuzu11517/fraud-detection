@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fraud Detection Monitor</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0e17;
+      --surface: #111827;
+      --surface-2: #1a2234;
+      --border: #1e2d45;
+      --text: #e2e8f0;
+      --text-dim: #64748b;
+      --green: #22c55e;
+      --green-dim: rgba(34, 197, 94, 0.12);
+      --red: #ef4444;
+      --red-dim: rgba(239, 68, 68, 0.12);
+      --amber: #f59e0b;
+      --amber-dim: rgba(245, 158, 11, 0.12);
+      --blue: #3b82f6;
+      --blue-dim: rgba(59, 130, 246, 0.12);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+    }
+
+    .header {
+      padding: 20px 32px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header h1 {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .header .status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-dim);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .content {
+      padding: 24px 32px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* Stats Cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px 20px;
+    }
+
+    .stat-card .label {
+      font-size: 12px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .stat-card .value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .stat-card .sub {
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-top: 4px;
+    }
+
+    .value.green { color: var(--green); }
+    .value.red { color: var(--red); }
+    .value.amber { color: var(--amber); }
+    .value.blue { color: var(--blue); }
+
+    /* Sections */
+    .section {
+      margin-bottom: 28px;
+    }
+
+    .section-header {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-dim);
+      margin-bottom: 12px;
+    }
+
+    /* Model Performance */
+    .model-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .model-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px 20px;
+    }
+
+    .model-card .title {
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 14px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .model-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+    }
+
+    .model-row .label {
+      font-size: 13px;
+      color: var(--text-dim);
+    }
+
+    .model-row .score {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    /* Transaction Feed */
+    .feed {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .feed-header {
+      display: grid;
+      grid-template-columns: 90px 70px 100px 90px 90px 90px 80px 70px;
+      gap: 8px;
+      padding: 12px 20px;
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .feed-row {
+      display: grid;
+      grid-template-columns: 90px 70px 100px 90px 90px 90px 80px 70px;
+      gap: 8px;
+      padding: 10px 20px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      align-items: center;
+      transition: background 0.3s ease;
+    }
+
+    .feed-row:last-child {
+      border-bottom: none;
+    }
+
+    .feed-row.new {
+      animation: fadeIn 0.5s ease;
+    }
+
+    @keyframes fadeIn {
+      from { background: rgba(59, 130, 246, 0.08); }
+      to { background: transparent; }
+    }
+
+    .feed-row .mono {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+    }
+
+    /* Decision badges */
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .badge.block {
+      background: var(--red-dim);
+      color: var(--red);
+    }
+
+    .badge.review {
+      background: var(--amber-dim);
+      color: var(--amber);
+    }
+
+    .badge.allow {
+      background: var(--green-dim);
+      color: var(--green);
+    }
+
+    .badge.fraud {
+      background: var(--red-dim);
+      color: var(--red);
+    }
+
+    .badge.legit {
+      background: var(--green-dim);
+      color: var(--green);
+    }
+
+    /* Empty state */
+    .empty {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--text-dim);
+      font-size: 14px;
+    }
+
+    .empty code {
+      display: block;
+      margin-top: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: var(--blue);
+    }
+
+    /* Score bar */
+    .score-bar {
+      width: 60px;
+      height: 6px;
+      background: var(--surface-2);
+      border-radius: 3px;
+      overflow: hidden;
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+
+    .score-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.3s ease;
+    }
+
+    .score-cell {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    @media (max-width: 900px) {
+      .content { padding: 16px; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .model-grid { grid-template-columns: 1fr; }
+      .feed-header, .feed-row {
+        grid-template-columns: 80px 60px 80px 80px 80px 80px 70px 60px;
+        font-size: 11px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Fraud Detection Monitor</h1>
+    <div class="status">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="statusText">Connecting...</span>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- Stats Row -->
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card">
+        <div class="label">Transactions</div>
+        <div class="value blue" id="statTotal">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Blocked</div>
+        <div class="value red" id="statBlocked">0</div>
+        <div class="sub" id="statBlockedSub">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Reviewed</div>
+        <div class="value amber" id="statReviewed">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Allowed</div>
+        <div class="value green" id="statAllowed">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Fraud Catch Rate</div>
+        <div class="value green" id="statCatchRate">—</div>
+        <div class="sub" id="statCatchSub">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">False Positive Rate</div>
+        <div class="value" id="statFPR">—</div>
+        <div class="sub" id="statFPRSub">—</div>
+      </div>
+    </div>
+
+    <!-- Model Scores -->
+    <div class="section">
+      <div class="section-header">Model Performance</div>
+      <div class="model-grid">
+        <div class="model-card">
+          <div class="title">XGBoost (Supervised)</div>
+          <div class="model-row">
+            <span class="label">Avg score on fraud</span>
+            <span class="score mono" id="xgbFraud" style="color: var(--red);">—</span>
+          </div>
+          <div class="model-row">
+            <span class="label">Avg score on legit</span>
+            <span class="score mono" id="xgbLegit" style="color: var(--green);">—</span>
+          </div>
+        </div>
+        <div class="model-card">
+          <div class="title">Autoencoder (Anomaly)</div>
+          <div class="model-row">
+            <span class="label">Avg score on fraud</span>
+            <span class="score mono" id="aeFraud" style="color: var(--red);">—</span>
+          </div>
+          <div class="model-row">
+            <span class="label">Avg score on legit</span>
+            <span class="score mono" id="aeLegit" style="color: var(--green);">—</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Transaction Feed -->
+    <div class="section">
+      <div class="section-header">Live Feed</div>
+      <div class="feed">
+        <div class="feed-header">
+          <div>Time</div>
+          <div>User</div>
+          <div>Amount</div>
+          <div>XGB</div>
+          <div>AE</div>
+          <div>Combined</div>
+          <div>Decision</div>
+          <div>Actual</div>
+        </div>
+        <div id="feedBody">
+          <div class="empty">
+            No transactions yet.
+            <code>python src/producer.py && python src/consumer.py</code>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let lastCount = 0;
+
+    function getScoreColor(score) {
+      if (score >= 0.7) return 'var(--red)';
+      if (score >= 0.4) return 'var(--amber)';
+      return 'var(--green)';
+    }
+
+    function formatTime(ts) {
+      const d = new Date(ts * 1000);
+      return d.toLocaleTimeString('en-US', { hour12: false });
+    }
+
+    function formatMoney(amount) {
+      return '$' + amount.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
+
+    function createScoreCell(score) {
+      const color = getScoreColor(score);
+      return `
+        <div class="score-cell">
+          <div class="score-bar">
+            <div class="score-bar-fill" style="width: ${score * 100}%; background: ${color};"></div>
+          </div>
+          <span class="mono" style="color: ${color};">${score.toFixed(3)}</span>
+        </div>
+      `;
+    }
+
+    async function updateStats() {
+      try {
+        const res = await fetch('/api/stats');
+        const s = await res.json();
+
+        document.getElementById('statTotal').textContent = s.total;
+        document.getElementById('statBlocked').textContent = s.blocked;
+        document.getElementById('statReviewed').textContent = s.reviewed;
+        document.getElementById('statAllowed').textContent = s.allowed;
+
+        if (s.actual_fraud > 0) {
+          document.getElementById('statCatchRate').textContent = s.catch_rate + '%';
+          document.getElementById('statCatchSub').textContent =
+            s.fraud_caught + ' / ' + s.actual_fraud + ' caught';
+        }
+
+        document.getElementById('statFPR').textContent = s.false_positive_rate + '%';
+        document.getElementById('statFPR').style.color =
+          s.false_positive_rate > 1 ? 'var(--red)' : 'var(--green)';
+        document.getElementById('statFPRSub').textContent =
+          s.false_blocks + ' false blocks';
+        document.getElementById('statBlockedSub').textContent =
+          s.false_blocks + ' false / ' + s.blocked + ' total';
+
+        document.getElementById('xgbFraud').textContent = s.avg_xgb_score_fraud;
+        document.getElementById('xgbLegit').textContent = s.avg_xgb_score_legit;
+        document.getElementById('aeFraud').textContent = s.avg_ae_score_fraud;
+        document.getElementById('aeLegit').textContent = s.avg_ae_score_legit;
+
+        // Update status
+        document.getElementById('statusText').textContent =
+          s.total + ' transactions processed';
+
+      } catch (err) {
+        document.getElementById('statusDot').style.background = 'var(--red)';
+        document.getElementById('statusText').textContent = 'Connection lost';
+      }
+    }
+
+    async function updateFeed() {
+      try {
+        const res = await fetch('/api/transactions');
+        const txns = await res.json();
+
+        if (txns.length === 0) return;
+
+        const body = document.getElementById('feedBody');
+        const isNew = txns.length !== lastCount;
+        lastCount = txns.length;
+
+        // Build rows (txns are already newest-first from LPUSH)
+        let html = '';
+        txns.slice(0, 50).forEach((t, i) => {
+          const decisionClass = t.decision.toLowerCase();
+          const actualClass = t.actual === 1 ? 'fraud' : 'legit';
+          const actualLabel = t.actual === 1 ? 'FRAUD' : 'LEGIT';
+          const newClass = (isNew && i === 0) ? 'new' : '';
+
+          html += `
+            <div class="feed-row ${newClass}">
+              <div class="mono" style="color: var(--text-dim);">${formatTime(t.timestamp)}</div>
+              <div class="mono">${t.user_id}</div>
+              <div class="mono">${formatMoney(t.amount)}</div>
+              ${createScoreCell(t.xgb_score)}
+              ${createScoreCell(t.ae_score)}
+              ${createScoreCell(t.combined_score)}
+              <div><span class="badge ${decisionClass}">${t.decision}</span></div>
+              <div><span class="badge ${actualClass}">${actualLabel}</span></div>
+            </div>
+          `;
+        });
+
+        body.innerHTML = html;
+
+      } catch (err) {
+        // silently fail — stats update will show connection error
+      }
+    }
+
+    // Poll every 2 seconds
+    async function poll() {
+      await updateStats();
+      await updateFeed();
+    }
+
+    poll();
+    setInterval(poll, 2000);
+  </script>
+</body>
+</html>

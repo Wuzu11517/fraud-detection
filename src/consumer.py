@@ -1,5 +1,7 @@
 import os
 import sys
+import time
+import json
 import pickle
 import numpy as np
 import pandas as pd
@@ -71,11 +73,10 @@ def parse_message(msg_data):
 def build_feature_vector(features, amount, training_stats):
     """
     Build the full feature vector that our models expect.
-    
-    This replicates the same feature engineering from data.py,
-    but for a single transaction instead of a whole DataFrame.
-    The models were trained on these exact features, so we must
-    produce them in the same way.
+    This must apply the same feature engineering as training, using
+    the SAME training stats for normalization. Otherwise, the model
+    won't know how to interpret the new data. This is a common source of
+    "training-serving skew" bugs in real systems.
     """
     row = dict(features)  # copy V1-V28
     row['Amount'] = amount
@@ -108,6 +109,9 @@ def build_feature_vector(features, amount, training_stats):
 
 
 def score_transaction(xgb_model, ae_model, scaler, ae_stats, feature_vector):
+    """
+    Run both models and combine their scores.
+    """
     # XGBoost: get fraud probability
     xgb_score = xgb_model.predict_proba(feature_vector)[:, 1][0]
 
@@ -129,6 +133,7 @@ def score_transaction(xgb_model, ae_model, scaler, ae_stats, feature_vector):
 def make_decision(combined_score):
     """
     Apply tiered thresholds to make the final decision.
+    These thresholds can be tuned based on validation performance
     """
     if combined_score >= 0.7:
         return 'BLOCK', 'HIGH'
@@ -137,10 +142,14 @@ def make_decision(combined_score):
     else:
         return 'ALLOW', 'LOW'
 
+
 def consume(max_messages=None):
     """
     Main consumer loop. Reads from the stream and processes
     transactions until stopped or max_messages is reached.
+    
+    Args:
+        max_messages: stop after this many (None = run forever)
     """
     r = get_redis()
     setup_stream(r)
@@ -214,7 +223,26 @@ def consume(max_messages=None):
         # 7. Acknowledge the message — tells Redis we're done with it
         r.xack(STREAM_NAME, GROUP_NAME, msg_id)
 
-        # 8. Log the result
+        # 8. Store result in Redis for the dashboard to read
+        result = {
+            'msg_id': msg_id,
+            'user_id': user_id,
+            'amount': round(float(amount), 2),
+            'xgb_score': round(float(xgb_score), 3),
+            'ae_score': round(float(ae_score), 3),
+            'combined_score': round(float(combined_score), 3),
+            'decision': decision,
+            'risk': risk,
+            'actual': int(actual_class),
+            'timestamp': time.time(),
+        }
+        # LPUSH adds to the front of a list. The dashboard reads
+        # the most recent N results with LRANGE.
+        r.lpush('results', json.dumps(result))
+        # Keep only the last 500 results to avoid unbounded growth
+        r.ltrim('results', 0, 499)
+
+        # 9. Log the result
         actual = "FRAUD" if actual_class == 1 else "LEGIT"
         correct = "✓" if (decision == 'BLOCK' and actual_class == 1) or \
                          (decision == 'ALLOW' and actual_class == 0) else \
