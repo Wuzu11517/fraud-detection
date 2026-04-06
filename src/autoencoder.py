@@ -1,5 +1,9 @@
 """
 Autoencoder for anomaly detection.
+
+This module defines, trains, and evaluates an autoencoder that learns
+what "normal" transactions look like. Anything it can't reconstruct
+well is flagged as anomalous — potentially fraud.
 """
 
 import os
@@ -14,24 +18,26 @@ from sklearn.metrics import roc_auc_score, precision_score, recall_score
 
 from data import load_data, engineer_features, prepare_features, PROJECT_ROOT
 
+
 class Autoencoder(nn.Module):
+
     def __init__(self, input_dim):
-        super().__init__() #standard PyTorch boilerplate to initialize the base class
+        super().__init__()
 
         # nn.Sequential chains layers together so data flows through
         # them in order automatically.
         self.encoder = nn.Sequential(
             nn.Linear(input_dim, 16),   # 34 features → 16
             nn.ReLU(),
-            nn.Linear(16, 8),      
+            nn.Linear(16, 8),           # 16 → 8 (bottleneck)
             nn.ReLU(),
         )
 
         self.decoder = nn.Sequential(
-            nn.Linear(8, 16),
+            nn.Linear(8, 16),           # 8 → 16
             nn.ReLU(),
-            nn.Linear(16, input_dim),  
-            # No activation on the final layer we want the raw
+            nn.Linear(16, input_dim),   # 16 → 34 (reconstruct)
+            # No activation on the final layer — we want the raw
             # reconstructed values, not values clamped by ReLU.
         )
 
@@ -47,8 +53,16 @@ class Autoencoder(nn.Module):
 def train_autoencoder(X_train_legit, epochs=50, batch_size=256, lr=0.001):
     """
     Train the autoencoder on legitimate transactions only.
+    
+    Steps:
+      1. Scale the data so all features have mean=0, std=1.
+         Neural networks train better when inputs are on similar scales.
+      2. Convert to PyTorch tensors (PyTorch's data format).
+      3. Create a DataLoader that feeds data in batches.
+      4. Train by minimizing reconstruction error (MSE loss).
     """
-    # --- SCALING ---
+    
+
     # StandardScaler transforms each column to have mean=0 and std=1.
     # Before: Amount_log might range 0-10, V1 might range -5 to 5
     # After: both center around 0 with similar spread.
@@ -123,9 +137,6 @@ def train_autoencoder(X_train_legit, epochs=50, batch_size=256, lr=0.001):
     return model, scaler
 
 
-# ============================================================
-# SCORING
-# ============================================================
 def compute_reconstruction_error(model, scaler, X):
     """
     Compute reconstruction error for each transaction.
@@ -133,15 +144,8 @@ def compute_reconstruction_error(model, scaler, X):
     High error = the autoencoder couldn't reconstruct this transaction
     well, meaning it doesn't fit the pattern of "normal." This is our
     anomaly score.
-    
-    Args:
-        model:  trained Autoencoder
-        scaler: fitted StandardScaler (same one used during training)
-        X:      DataFrame of features to score
-    
-    Returns:
-        numpy array of reconstruction errors (one per transaction)
     """
+
     # Scale using the SAME scaler from training (not a new one).
     # This ensures the data is on the same scale the model expects.
     X_scaled = scaler.transform(X)
@@ -165,9 +169,6 @@ def evaluate_autoencoder(errors, y_true):
     """
     Evaluate how well reconstruction error separates fraud from legit.
     
-    Args:
-        errors: reconstruction error per transaction
-        y_true: actual labels (0 = legit, 1 = fraud)
     """
     legit_errors = errors[y_true == 0]
     fraud_errors = errors[y_true == 1]
@@ -221,48 +222,37 @@ def save_autoencoder(model, scaler, ae_stats=None, model_path=None, scaler_path=
     print(f"Scaler saved to {scaler_path}")
 
 
-# ============================================================
-# MAIN
-# ============================================================
 if __name__ == '__main__':
     from sklearn.model_selection import train_test_split
 
-    # 1. Load and engineer features
     df = load_data()
     df, _ = engineer_features(df)
     X, y = prepare_features(df)
 
-    # 2. Split data
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42, stratify=y
     )
 
-    # 3. Train ONLY on legitimate transactions from the training set
-    #    This is the key difference from XGBoost — we don't show
-    #    the autoencoder any fraud examples.
     X_train_legit = X_train[y_train == 0]
     print(f"Training on {len(X_train_legit)} legitimate transactions only")
     print(f"(Excluding {(y_train == 1).sum()} fraud transactions from training)\n")
 
     model, scaler = train_autoencoder(X_train_legit, epochs=50)
 
-    # 4. Score ALL test transactions (both legit and fraud)
     print("Scoring test set...")
     errors = compute_reconstruction_error(model, scaler, X_test)
 
-    # 5. Compute error stats from legitimate test transactions.
-    #    The consumer needs these to normalize raw reconstruction
-    #    error into a 0-1 score. We use the 95th percentile of
-    #    legit errors as the normalization ceiling — anything above
-    #    this is very likely anomalous.
     legit_errors = errors[y_test.values == 0]
+    fraud_errors = errors[y_test.values == 1]
     ae_stats = {
         'legit_error_mean': float(legit_errors.mean()),
         'legit_error_std': float(legit_errors.std()),
         'legit_error_95th': float(np.percentile(legit_errors, 95)),
+        'legit_error_99th': float(np.percentile(legit_errors, 99)),
+        'fraud_error_mean': float(fraud_errors.mean()),
+        'fraud_error_median': float(np.median(fraud_errors)),
     }
 
-    # 6. Evaluate
     print(f"\n{'='*50}")
     print(f"  AUTOENCODER RESULTS ON {len(y_test)} UNSEEN TRANSACTIONS")
     print(f"{'='*50}")
