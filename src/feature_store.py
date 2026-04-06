@@ -42,8 +42,6 @@ HOW IT WORKS:
 import time
 import numpy as np
 
-
-# Prefix for user aggregate keys in Redis
 USER_PREFIX = 'user:'
 
 
@@ -57,13 +55,6 @@ def get_user_aggregate(r, user_id):
     
     All values come back as strings (Redis stores everything as
     strings), so we convert them to floats/ints as needed.
-    
-    Args:
-        r:       Redis connection
-        user_id: the user's ID (e.g., "123")
-    
-    Returns:
-        dict with user aggregate data, or empty dict for new users
     """
     key = f"{USER_PREFIX}{user_id}"
     data = r.hgetall(key)
@@ -88,17 +79,6 @@ def update_user_aggregate(r, user_id, amount):
     
     We use a Redis pipeline here. A pipeline batches multiple
     Redis commands into a single round-trip to the server:
-    
-      Without pipeline: send HSET → wait → send HSET → wait → send HSET → wait
-      With pipeline:    send HSET + HSET + HSET all at once → wait once
-    
-    This is faster because network round-trips are the bottleneck,
-    not the actual Redis operations.
-    
-    Args:
-        r:       Redis connection
-        user_id: the user's ID
-        amount:  transaction amount in dollars
     """
     key = f"{USER_PREFIX}{user_id}"
     now = time.time()
@@ -132,13 +112,6 @@ def compute_user_features(aggregate, amount):
     because the dataset didn't have user IDs. In the streaming
     pipeline, we simulate them. They're the most valuable fraud
     signals because they capture individual behavior patterns.
-    
-    Args:
-        aggregate: user's current aggregate from Redis (dict)
-        amount:    this transaction's dollar amount
-    
-    Returns:
-        dict of computed user-level features
     """
     if not aggregate or aggregate.get('txn_count', 0) == 0:
         # First transaction for this user — no history to compare
