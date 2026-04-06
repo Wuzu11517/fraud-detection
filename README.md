@@ -1,5 +1,10 @@
 # Real-Time Fraud Detection System
 
+# EXAMPLE
+
+![Fraud-like Page](./assets/fraud_page.png)
+![Legit-like Paged](./assets/legit_page.png)
+
 A real-time credit card fraud detection pipeline that scores transactions as they arrive using an ensemble of a gradient-boosted tree model and a neural network autoencoder, served over Redis Streams with a live monitoring dashboard.
 
 The system processes transactions in milliseconds, combining a supervised model that recognizes known fraud patterns with an unsupervised anomaly detector that catches novel attacks the supervised model has never seen.
