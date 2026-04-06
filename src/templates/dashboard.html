@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Fraud Detection Monitor</title>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #0a0e17;
@@ -13,6 +13,7 @@
       --border: #1e2d45;
       --text: #e2e8f0;
       --text-dim: #64748b;
+      --text-muted: #3a4a63;
       --green: #22c55e;
       --green-dim: rgba(34, 197, 94, 0.12);
       --red: #ef4444;
@@ -21,13 +22,11 @@
       --amber-dim: rgba(245, 158, 11, 0.12);
       --blue: #3b82f6;
       --blue-dim: rgba(59, 130, 246, 0.12);
+      --purple: #a855f7;
+      --purple-dim: rgba(168, 85, 247, 0.12);
     }
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
       background: var(--bg);
@@ -36,6 +35,7 @@
       min-height: 100vh;
     }
 
+    /* ── Header ── */
     .header {
       padding: 20px 32px;
       border-bottom: 1px solid var(--border);
@@ -46,178 +46,368 @@
 
     .header h1 {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 700;
       letter-spacing: -0.5px;
-    }
-
-    .header .status {
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-size: 13px;
-      color: var(--text-dim);
+      gap: 10px;
     }
 
-    .status-dot {
-      width: 8px;
-      height: 8px;
+    .header h1 .dot {
+      width: 8px; height: 8px;
       border-radius: 50%;
       background: var(--green);
       animation: pulse 2s ease-in-out infinite;
     }
 
     @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(34,197,94,0.4); }
+      50% { opacity: 0.6; box-shadow: 0 0 0 6px rgba(34,197,94,0); }
+    }
+
+    .header .status {
+      font-size: 13px;
+      color: var(--text-dim);
+      font-family: 'JetBrains Mono', monospace;
     }
 
     .content {
-      padding: 24px 32px;
+      padding: 28px 32px;
       max-width: 1400px;
       margin: 0 auto;
     }
 
-    /* Stats Cards */
-    .stats-grid {
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+    }
+
+    /* ── Hero Stats ── */
+    .hero-row {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      grid-template-columns: 1fr 1fr 2fr;
       gap: 16px;
-      margin-bottom: 28px;
+      margin-bottom: 24px;
+    }
+
+    .hero-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+    }
+
+    .hero-card .hero-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 48px;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .hero-card .hero-label {
+      font-size: 13px;
+      color: var(--text-dim);
+    }
+
+    .hero-card .hero-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+      margin-top: 8px;
+    }
+
+    /* Distribution bar */
+    .dist-card {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .dist-bar-container {
+      margin-top: 12px;
+    }
+
+    .dist-bar {
+      display: flex;
+      height: 32px;
+      border-radius: 6px;
+      overflow: hidden;
+      background: var(--surface-2);
+    }
+
+    .dist-segment {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      transition: width 0.6s ease;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .dist-segment.block { background: rgba(239, 68, 68, 0.25); color: var(--red); }
+    .dist-segment.review { background: rgba(245, 158, 11, 0.2); color: var(--amber); }
+    .dist-segment.allow { background: rgba(34, 197, 94, 0.2); color: var(--green); }
+
+    .dist-legend {
+      display: flex;
+      gap: 20px;
+      margin-top: 10px;
+    }
+
+    .dist-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    .dist-legend-dot {
+      width: 8px; height: 8px;
+      border-radius: 2px;
+    }
+
+    /* ── Secondary Stats ── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
     }
 
     .stat-card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 10px;
-      padding: 18px 20px;
+      padding: 16px 20px;
     }
 
-    .stat-card .label {
-      font-size: 12px;
-      color: var(--text-dim);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 8px;
-    }
-
-    .stat-card .value {
+    .stat-card .stat-value {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 28px;
+      font-size: 20px;
       font-weight: 700;
+      margin-bottom: 4px;
     }
 
-    .stat-card .sub {
+    .stat-card .stat-label {
       font-size: 12px;
       color: var(--text-dim);
-      margin-top: 4px;
     }
 
-    .value.green { color: var(--green); }
-    .value.red { color: var(--red); }
-    .value.amber { color: var(--amber); }
-    .value.blue { color: var(--blue); }
-
-    /* Sections */
-    .section {
-      margin-bottom: 28px;
-    }
-
-    .section-header {
-      font-size: 14px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--text-dim);
-      margin-bottom: 12px;
-    }
-
-    /* Model Performance */
-    .model-grid {
+    /* ── Submit + Gauge ── */
+    .submit-section {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      margin-bottom: 28px;
+      grid-template-columns: 1fr 280px;
+      gap: 20px;
+      margin-bottom: 24px;
     }
 
-    .model-card {
+    .submit-panel {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 18px 20px;
+      border-radius: 12px;
+      padding: 24px;
     }
 
-    .model-card .title {
-      font-size: 13px;
-      font-weight: 700;
-      margin-bottom: 14px;
+    .submit-form {
+      display: flex;
+      gap: 14px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group label {
+      font-size: 11px;
       color: var(--text-dim);
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
 
-    .model-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 6px 0;
-    }
-
-    .model-row .label {
-      font-size: 13px;
-      color: var(--text-dim);
-    }
-
-    .model-row .score {
+    .form-group input, .form-group select {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 14px;
+      color: var(--text);
       font-family: 'JetBrains Mono', monospace;
       font-size: 14px;
-      font-weight: 500;
+      outline: none;
+      width: 150px;
+      transition: border-color 0.2s;
     }
 
-    /* Transaction Feed */
+    .form-group select { cursor: pointer; width: 160px; }
+    .form-group input:focus, .form-group select:focus { border-color: var(--blue); }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      letter-spacing: 0.3px;
+    }
+
+    .btn-primary { background: var(--blue); color: white; }
+    .btn-primary:hover { background: #2563eb; transform: translateY(-1px); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-dim);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { border-color: var(--text-dim); color: var(--text); }
+
+    .submit-meta {
+      margin-top: 16px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      display: none;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .submit-meta.block { background: var(--red-dim); border-left: 3px solid var(--red); }
+    .submit-meta.review { background: var(--amber-dim); border-left: 3px solid var(--amber); }
+    .submit-meta.allow { background: var(--green-dim); border-left: 3px solid var(--green); }
+
+    .submit-meta-row {
+      display: flex;
+      gap: 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+    }
+
+    .submit-meta-row span { color: var(--text-dim); }
+
+    /* ── Gauge ── */
+    .gauge-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .gauge-wrap {
+      position: relative;
+      width: 200px;
+      height: 110px;
+      overflow: hidden;
+    }
+
+    .gauge-svg {
+      width: 200px;
+      height: 200px;
+    }
+
+    .gauge-bg {
+      fill: none;
+      stroke: var(--surface-2);
+      stroke-width: 16;
+    }
+
+    .gauge-fill {
+      fill: none;
+      stroke: var(--green);
+      stroke-width: 16;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 0.8s ease, stroke 0.4s ease;
+    }
+
+    .gauge-value {
+      position: absolute;
+      bottom: 4px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 32px;
+      font-weight: 700;
+      transition: color 0.4s ease;
+    }
+
+    .gauge-label {
+      margin-top: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: color 0.4s ease;
+    }
+
+    .gauge-hint {
+      margin-top: 4px;
+      font-size: 11px;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    /* ── Feed ── */
     .feed {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 10px;
+      border-radius: 12px;
       overflow: hidden;
     }
 
     .feed-header {
       display: grid;
-      grid-template-columns: 90px 70px 100px 90px 90px 90px 80px 70px;
+      grid-template-columns: 80px 60px 100px 100px 100px 100px 80px 70px;
       gap: 8px;
-      padding: 12px 20px;
+      padding: 10px 20px;
       background: var(--surface-2);
       border-bottom: 1px solid var(--border);
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 700;
-      color: var(--text-dim);
+      color: var(--text-muted);
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.8px;
     }
 
     .feed-row {
       display: grid;
-      grid-template-columns: 90px 70px 100px 90px 90px 90px 80px 70px;
+      grid-template-columns: 80px 60px 100px 100px 100px 100px 80px 70px;
       gap: 8px;
-      padding: 10px 20px;
-      border-bottom: 1px solid var(--border);
+      padding: 9px 20px;
+      border-bottom: 1px solid rgba(30,45,69,0.5);
       font-size: 13px;
       align-items: center;
-      transition: background 0.3s ease;
     }
 
-    .feed-row:last-child {
-      border-bottom: none;
-    }
+    .feed-row:last-child { border-bottom: none; }
+    .feed-row.new { animation: rowFlash 0.6s ease; }
 
-    .feed-row.new {
-      animation: fadeIn 0.5s ease;
-    }
-
-    @keyframes fadeIn {
-      from { background: rgba(59, 130, 246, 0.08); }
-      to { background: transparent; }
+    @keyframes rowFlash {
+      0% { background: rgba(59,130,246,0.1); }
+      100% { background: transparent; }
     }
 
     .feed-row .mono {
@@ -225,62 +415,32 @@
       font-size: 12px;
     }
 
-    /* Decision badges */
     .badge {
       display: inline-block;
-      padding: 3px 10px;
+      padding: 2px 8px;
       border-radius: 4px;
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.4px;
     }
 
-    .badge.block {
-      background: var(--red-dim);
-      color: var(--red);
-    }
+    .badge.block { background: var(--red-dim); color: var(--red); }
+    .badge.review { background: var(--amber-dim); color: var(--amber); }
+    .badge.allow { background: var(--green-dim); color: var(--green); }
+    .badge.fraud { background: var(--red-dim); color: var(--red); }
+    .badge.legit { background: var(--green-dim); color: var(--green); }
+    .badge.manual { background: var(--purple-dim); color: var(--purple); }
 
-    .badge.review {
-      background: var(--amber-dim);
-      color: var(--amber);
-    }
-
-    .badge.allow {
-      background: var(--green-dim);
-      color: var(--green);
-    }
-
-    .badge.fraud {
-      background: var(--red-dim);
-      color: var(--red);
-    }
-
-    .badge.legit {
-      background: var(--green-dim);
-      color: var(--green);
-    }
-
-    /* Empty state */
     .empty {
       text-align: center;
-      padding: 48px 20px;
-      color: var(--text-dim);
-      font-size: 14px;
-    }
-
-    .empty code {
-      display: block;
-      margin-top: 12px;
-      font-family: 'JetBrains Mono', monospace;
+      padding: 40px 20px;
+      color: var(--text-muted);
       font-size: 13px;
-      color: var(--blue);
     }
 
-    /* Score bar */
     .score-bar {
-      width: 60px;
-      height: 6px;
+      width: 50px; height: 5px;
       background: var(--surface-2);
       border-radius: 3px;
       overflow: hidden;
@@ -295,113 +455,157 @@
       transition: width 0.3s ease;
     }
 
-    .score-cell {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
+    .score-cell { display: flex; align-items: center; gap: 4px; }
 
-    @media (max-width: 900px) {
+    @media (max-width: 1000px) {
       .content { padding: 16px; }
-      .stats-grid { grid-template-columns: repeat(2, 1fr); }
-      .model-grid { grid-template-columns: 1fr; }
-      .feed-header, .feed-row {
-        grid-template-columns: 80px 60px 80px 80px 80px 80px 70px 60px;
-        font-size: 11px;
-      }
+      .hero-row { grid-template-columns: 1fr 1fr; }
+      .hero-row .dist-card { grid-column: 1 / -1; }
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+      .submit-section { grid-template-columns: 1fr; }
+      .submit-form { flex-direction: column; align-items: stretch; }
+      .form-group input, .form-group select { width: 100%; }
     }
   </style>
 </head>
 <body>
   <div class="header">
-    <h1>Fraud Detection Monitor</h1>
-    <div class="status">
-      <div class="status-dot" id="statusDot"></div>
-      <span id="statusText">Connecting...</span>
-    </div>
+    <h1><span class="dot"></span>Fraud Detection Monitor</h1>
+    <div class="status" id="statusText">Connecting...</div>
   </div>
 
   <div class="content">
-    <!-- Stats Row -->
-    <div class="stats-grid" id="statsGrid">
-      <div class="stat-card">
-        <div class="label">Transactions</div>
-        <div class="value blue" id="statTotal">0</div>
+    <!-- Hero Stats -->
+    <div class="section-label">Overview</div>
+    <div class="hero-row">
+      <div class="hero-card">
+        <div class="hero-value green" id="heroCatchRate">—</div>
+        <div class="hero-label">Fraud Catch Rate</div>
+        <div class="hero-sub" id="heroCatchSub"></div>
       </div>
-      <div class="stat-card">
-        <div class="label">Blocked</div>
-        <div class="value red" id="statBlocked">0</div>
-        <div class="sub" id="statBlockedSub">—</div>
+      <div class="hero-card">
+        <div class="hero-value" id="heroTotal" style="color:var(--text);">0</div>
+        <div class="hero-label">Transactions Processed</div>
+        <div class="hero-sub" id="heroFPR"></div>
       </div>
-      <div class="stat-card">
-        <div class="label">Reviewed</div>
-        <div class="value amber" id="statReviewed">0</div>
-      </div>
-      <div class="stat-card">
-        <div class="label">Allowed</div>
-        <div class="value green" id="statAllowed">0</div>
-      </div>
-      <div class="stat-card">
-        <div class="label">Fraud Catch Rate</div>
-        <div class="value green" id="statCatchRate">—</div>
-        <div class="sub" id="statCatchSub">—</div>
-      </div>
-      <div class="stat-card">
-        <div class="label">False Positive Rate</div>
-        <div class="value" id="statFPR">—</div>
-        <div class="sub" id="statFPRSub">—</div>
-      </div>
-    </div>
-
-    <!-- Model Scores -->
-    <div class="section">
-      <div class="section-header">Model Performance</div>
-      <div class="model-grid">
-        <div class="model-card">
-          <div class="title">XGBoost (Supervised)</div>
-          <div class="model-row">
-            <span class="label">Avg score on fraud</span>
-            <span class="score mono" id="xgbFraud" style="color: var(--red);">—</span>
+      <div class="hero-card dist-card">
+        <div class="hero-label">Decision Distribution</div>
+        <div class="dist-bar-container">
+          <div class="dist-bar">
+            <div class="dist-segment block" id="distBlock" style="width:33.3%">0</div>
+            <div class="dist-segment review" id="distReview" style="width:33.3%">0</div>
+            <div class="dist-segment allow" id="distAllow" style="width:33.3%">0</div>
           </div>
-          <div class="model-row">
-            <span class="label">Avg score on legit</span>
-            <span class="score mono" id="xgbLegit" style="color: var(--green);">—</span>
-          </div>
-        </div>
-        <div class="model-card">
-          <div class="title">Autoencoder (Anomaly)</div>
-          <div class="model-row">
-            <span class="label">Avg score on fraud</span>
-            <span class="score mono" id="aeFraud" style="color: var(--red);">—</span>
-          </div>
-          <div class="model-row">
-            <span class="label">Avg score on legit</span>
-            <span class="score mono" id="aeLegit" style="color: var(--green);">—</span>
+          <div class="dist-legend">
+            <div class="dist-legend-item">
+              <div class="dist-legend-dot" style="background:var(--red);"></div>
+              <span>Blocked <b id="distBlockN">0</b></span>
+            </div>
+            <div class="dist-legend-item">
+              <div class="dist-legend-dot" style="background:var(--amber);"></div>
+              <span>Review <b id="distReviewN">0</b></span>
+            </div>
+            <div class="dist-legend-item">
+              <div class="dist-legend-dot" style="background:var(--green);"></div>
+              <span>Allowed <b id="distAllowN">0</b></span>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Transaction Feed -->
-    <div class="section">
-      <div class="section-header">Live Feed</div>
-      <div class="feed">
-        <div class="feed-header">
-          <div>Time</div>
-          <div>User</div>
-          <div>Amount</div>
-          <div>XGB</div>
-          <div>AE</div>
-          <div>Combined</div>
-          <div>Decision</div>
-          <div>Actual</div>
+    <!-- Secondary Stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-value" style="color:var(--red);" id="statBlocked">0</div>
+        <div class="stat-label">False Blocks</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" style="color:var(--text);" id="statFPR">0%</div>
+        <div class="stat-label">False Positive Rate</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" style="color:var(--red);" id="xgbFraud">—</div>
+        <div class="stat-label">XGBoost Avg (Fraud)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" style="color:var(--green);" id="xgbLegit">—</div>
+        <div class="stat-label">XGBoost Avg (Legit)</div>
+      </div>
+    </div>
+
+    <!-- Submit + Gauge -->
+    <div class="section-label">Score a Transaction</div>
+    <div class="submit-section">
+      <div class="submit-panel">
+        <div class="submit-form">
+          <div class="form-group">
+            <label>Amount ($)</label>
+            <input type="number" id="inputAmount" value="49.99" min="0.01" step="0.01">
+          </div>
+          <div class="form-group">
+            <label>User ID</label>
+            <input type="number" id="inputUserId" value="123" min="1" max="9999">
+          </div>
+          <div class="form-group">
+            <label>Feature Profile</label>
+            <select id="inputProfile">
+              <option value="random">Random</option>
+              <option value="legit">Legit-like</option>
+              <option value="fraud">Fraud-like</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" id="btnSubmit" onclick="submitTransaction()">
+            Score
+          </button>
+          <button class="btn btn-ghost" onclick="randomizeInputs()">
+            Randomize
+          </button>
         </div>
-        <div id="feedBody">
-          <div class="empty">
-            No transactions yet.
-            <code>python src/producer.py && python src/consumer.py</code>
+        <div class="submit-meta" id="submitMeta">
+          <div class="submit-meta-row">
+            <div><span>XGBoost</span> <b id="metaXgb">—</b></div>
+            <div><span>Autoencoder</span> <b id="metaAe">—</b></div>
+            <div><span>Combined</span> <b id="metaCombined">—</b></div>
+            <div><span>User</span> <b id="metaUser">—</b></div>
           </div>
         </div>
+      </div>
+
+      <div class="gauge-panel">
+        <div class="gauge-wrap">
+          <svg class="gauge-svg" viewBox="0 0 200 200">
+            <circle class="gauge-bg" cx="100" cy="100" r="84"
+              stroke-dasharray="263.9 263.9"
+              stroke-dashoffset="-131.95"
+              transform="rotate(180 100 100)" />
+            <circle class="gauge-fill" id="gaugeFill" cx="100" cy="100" r="84"
+              stroke-dasharray="263.9 263.9"
+              stroke-dashoffset="263.9"
+              transform="rotate(180 100 100)" />
+          </svg>
+          <div class="gauge-value" id="gaugeValue">—</div>
+        </div>
+        <div class="gauge-label" id="gaugeLabel" style="color:var(--text-muted);">Awaiting input</div>
+        <div class="gauge-hint" id="gaugeHint">Submit a transaction</div>
+      </div>
+    </div>
+
+    <!-- Feed -->
+    <div class="section-label">Live Feed</div>
+    <div class="feed">
+      <div class="feed-header">
+        <div>Time</div>
+        <div>User</div>
+        <div>Amount</div>
+        <div>XGBoost</div>
+        <div>Autoencoder</div>
+        <div>Combined</div>
+        <div>Decision</div>
+        <div>Actual</div>
+      </div>
+      <div id="feedBody">
+        <div class="empty">No transactions yet — submit one above.</div>
       </div>
     </div>
   </div>
@@ -409,34 +613,119 @@
   <script>
     let lastCount = 0;
 
+    // Half-circle arc length = pi * r = pi * 84 ≈ 263.9
+    const ARC_LEN = 263.9;
+
     function getScoreColor(score) {
       if (score >= 0.7) return 'var(--red)';
       if (score >= 0.4) return 'var(--amber)';
       return 'var(--green)';
     }
 
+    function getScoreHex(score) {
+      if (score >= 0.7) return '#ef4444';
+      if (score >= 0.4) return '#f59e0b';
+      return '#22c55e';
+    }
+
     function formatTime(ts) {
-      const d = new Date(ts * 1000);
-      return d.toLocaleTimeString('en-US', { hour12: false });
+      return new Date(ts * 1000).toLocaleTimeString('en-US', { hour12: false });
     }
 
     function formatMoney(amount) {
-      return '$' + amount.toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      });
+      return '$' + amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
     function createScoreCell(score) {
       const color = getScoreColor(score);
-      return `
-        <div class="score-cell">
-          <div class="score-bar">
-            <div class="score-bar-fill" style="width: ${score * 100}%; background: ${color};"></div>
-          </div>
-          <span class="mono" style="color: ${color};">${score.toFixed(3)}</span>
-        </div>
-      `;
+      return `<div class="score-cell">
+        <div class="score-bar"><div class="score-bar-fill" style="width:${score*100}%;background:${color};"></div></div>
+        <span class="mono" style="color:${color};">${score.toFixed(3)}</span>
+      </div>`;
+    }
+
+    function setGauge(score, decision) {
+      const fill = document.getElementById('gaugeFill');
+      const val = document.getElementById('gaugeValue');
+      const label = document.getElementById('gaugeLabel');
+      const hint = document.getElementById('gaugeHint');
+      const color = getScoreHex(score);
+
+      // Animate the arc: offset goes from ARC_LEN (empty) to ARC_LEN * (1 - score) (filled)
+      fill.style.strokeDashoffset = ARC_LEN * (1 - score);
+      fill.style.stroke = color;
+
+      val.textContent = score.toFixed(3);
+      val.style.color = color;
+
+      label.textContent = decision;
+      label.style.color = color;
+
+      const labels = { 'BLOCK': 'Transaction blocked', 'REVIEW': 'Flagged for review', 'ALLOW': 'Transaction allowed' };
+      hint.textContent = labels[decision] || '';
+    }
+
+    function resetGauge() {
+      const fill = document.getElementById('gaugeFill');
+      fill.style.strokeDashoffset = ARC_LEN;
+      document.getElementById('gaugeValue').textContent = '—';
+      document.getElementById('gaugeLabel').textContent = 'Awaiting input';
+      document.getElementById('gaugeLabel').style.color = 'var(--text-muted)';
+      document.getElementById('gaugeHint').textContent = 'Submit a transaction';
+    }
+
+    function randomizeInputs() {
+      const amounts = [3.50, 8.99, 22.43, 49.99, 85.00, 149.99, 299.50, 499.99, 1250.00, 3500.00];
+      document.getElementById('inputAmount').value = amounts[Math.floor(Math.random() * amounts.length)];
+      document.getElementById('inputUserId').value = Math.floor(Math.random() * 999) + 1;
+      document.getElementById('inputProfile').value = ['random','legit','fraud'][Math.floor(Math.random() * 3)];
+    }
+
+    async function submitTransaction() {
+      const btn = document.getElementById('btnSubmit');
+      btn.disabled = true;
+      btn.textContent = '...';
+
+      try {
+        const res = await fetch('/api/score', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount: parseFloat(document.getElementById('inputAmount').value),
+            user_id: document.getElementById('inputUserId').value,
+            profile: document.getElementById('inputProfile').value,
+          })
+        });
+        const r = await res.json();
+
+        // Animate gauge
+        setGauge(r.combined_score, r.decision);
+
+        // Show meta
+        const meta = document.getElementById('submitMeta');
+        meta.style.display = 'block';
+        meta.className = 'submit-meta ' + r.decision.toLowerCase();
+        document.getElementById('metaXgb').textContent = r.xgb_score.toFixed(3);
+        document.getElementById('metaXgb').style.color = getScoreColor(r.xgb_score);
+        document.getElementById('metaAe').textContent = r.ae_score.toFixed(3);
+        document.getElementById('metaAe').style.color = getScoreColor(r.ae_score);
+        document.getElementById('metaCombined').textContent = r.combined_score.toFixed(3);
+        document.getElementById('metaCombined').style.color = getScoreColor(r.combined_score);
+        document.getElementById('metaUser').textContent = r.user_id;
+
+        meta.style.animation = 'none';
+        meta.offsetHeight;
+        meta.style.animation = 'slideIn 0.3s ease';
+
+        await updateFeed();
+        await updateStats();
+
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+
+      btn.disabled = false;
+      btn.textContent = 'Score';
     }
 
     async function updateStats() {
@@ -444,36 +733,46 @@
         const res = await fetch('/api/stats');
         const s = await res.json();
 
-        document.getElementById('statTotal').textContent = s.total;
-        document.getElementById('statBlocked').textContent = s.blocked;
-        document.getElementById('statReviewed').textContent = s.reviewed;
-        document.getElementById('statAllowed').textContent = s.allowed;
+        document.getElementById('heroTotal').textContent = s.total;
 
         if (s.actual_fraud > 0) {
-          document.getElementById('statCatchRate').textContent = s.catch_rate + '%';
-          document.getElementById('statCatchSub').textContent =
-            s.fraud_caught + ' / ' + s.actual_fraud + ' caught';
+          document.getElementById('heroCatchRate').textContent = s.catch_rate + '%';
+          document.getElementById('heroCatchSub').textContent = s.fraud_caught + ' of ' + s.actual_fraud + ' caught';
+        } else {
+          document.getElementById('heroCatchRate').textContent = '—';
+          document.getElementById('heroCatchSub').textContent = 'No labeled fraud yet';
         }
 
+        document.getElementById('heroFPR').textContent =
+          s.false_positive_rate + '% false positive rate';
+
+        document.getElementById('statBlocked').textContent = s.false_blocks;
         document.getElementById('statFPR').textContent = s.false_positive_rate + '%';
         document.getElementById('statFPR').style.color =
           s.false_positive_rate > 1 ? 'var(--red)' : 'var(--green)';
-        document.getElementById('statFPRSub').textContent =
-          s.false_blocks + ' false blocks';
-        document.getElementById('statBlockedSub').textContent =
-          s.false_blocks + ' false / ' + s.blocked + ' total';
 
         document.getElementById('xgbFraud').textContent = s.avg_xgb_score_fraud;
         document.getElementById('xgbLegit').textContent = s.avg_xgb_score_legit;
-        document.getElementById('aeFraud').textContent = s.avg_ae_score_fraud;
-        document.getElementById('aeLegit').textContent = s.avg_ae_score_legit;
 
-        // Update status
-        document.getElementById('statusText').textContent =
-          s.total + ' transactions processed';
+        // Distribution bar
+        const total = s.blocked + s.reviewed + s.allowed;
+        if (total > 0) {
+          const bPct = (s.blocked / total * 100);
+          const rPct = (s.reviewed / total * 100);
+          const aPct = (s.allowed / total * 100);
+          document.getElementById('distBlock').style.width = bPct + '%';
+          document.getElementById('distBlock').textContent = bPct > 8 ? s.blocked : '';
+          document.getElementById('distReview').style.width = rPct + '%';
+          document.getElementById('distReview').textContent = rPct > 8 ? s.reviewed : '';
+          document.getElementById('distAllow').style.width = aPct + '%';
+          document.getElementById('distAllow').textContent = aPct > 8 ? s.allowed : '';
+        }
+        document.getElementById('distBlockN').textContent = s.blocked;
+        document.getElementById('distReviewN').textContent = s.reviewed;
+        document.getElementById('distAllowN').textContent = s.allowed;
 
+        document.getElementById('statusText').textContent = s.total + ' processed';
       } catch (err) {
-        document.getElementById('statusDot').style.background = 'var(--red)';
         document.getElementById('statusText').textContent = 'Connection lost';
       }
     }
@@ -482,48 +781,37 @@
       try {
         const res = await fetch('/api/transactions');
         const txns = await res.json();
-
         if (txns.length === 0) return;
 
         const body = document.getElementById('feedBody');
         const isNew = txns.length !== lastCount;
         lastCount = txns.length;
 
-        // Build rows (txns are already newest-first from LPUSH)
         let html = '';
         txns.slice(0, 50).forEach((t, i) => {
-          const decisionClass = t.decision.toLowerCase();
-          const actualClass = t.actual === 1 ? 'fraud' : 'legit';
-          const actualLabel = t.actual === 1 ? 'FRAUD' : 'LEGIT';
-          const newClass = (isNew && i === 0) ? 'new' : '';
+          const dc = t.decision.toLowerCase();
+          const nc = (isNew && i === 0) ? 'new' : '';
+          let ab;
+          if (t.actual === -1) ab = '<span class="badge manual">MANUAL</span>';
+          else if (t.actual === 1) ab = '<span class="badge fraud">FRAUD</span>';
+          else ab = '<span class="badge legit">LEGIT</span>';
 
-          html += `
-            <div class="feed-row ${newClass}">
-              <div class="mono" style="color: var(--text-dim);">${formatTime(t.timestamp)}</div>
-              <div class="mono">${t.user_id}</div>
-              <div class="mono">${formatMoney(t.amount)}</div>
-              ${createScoreCell(t.xgb_score)}
-              ${createScoreCell(t.ae_score)}
-              ${createScoreCell(t.combined_score)}
-              <div><span class="badge ${decisionClass}">${t.decision}</span></div>
-              <div><span class="badge ${actualClass}">${actualLabel}</span></div>
-            </div>
-          `;
+          html += `<div class="feed-row ${nc}">
+            <div class="mono" style="color:var(--text-dim);">${formatTime(t.timestamp)}</div>
+            <div class="mono">${t.user_id}</div>
+            <div class="mono">${formatMoney(t.amount)}</div>
+            ${createScoreCell(t.xgb_score)}
+            ${createScoreCell(t.ae_score)}
+            ${createScoreCell(t.combined_score)}
+            <div><span class="badge ${dc}">${t.decision}</span></div>
+            <div>${ab}</div>
+          </div>`;
         });
-
         body.innerHTML = html;
-
-      } catch (err) {
-        // silently fail — stats update will show connection error
-      }
+      } catch (err) {}
     }
 
-    // Poll every 2 seconds
-    async function poll() {
-      await updateStats();
-      await updateFeed();
-    }
-
+    async function poll() { await updateStats(); await updateFeed(); }
     poll();
     setInterval(poll, 2000);
   </script>
