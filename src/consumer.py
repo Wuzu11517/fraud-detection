@@ -13,9 +13,14 @@ from autoencoder import Autoencoder, compute_reconstruction_error
 from feature_store import get_user_aggregate, update_user_aggregate, compute_user_features
 from producer import STREAM_NAME, GROUP_NAME, get_redis, setup_stream
 
+
 def load_models():
     """
     Load XGBoost, autoencoder, scaler, and stats from disk.
+    
+    This happens once when the consumer starts up. The models
+    stay in memory for fast scoring — loading from disk on every
+    transaction would be far too slow.
     """
     # XGBoost
     xgb_path = os.path.join(PROJECT_ROOT, 'models', 'xgb_model.pkl')
@@ -73,10 +78,11 @@ def parse_message(msg_data):
 def build_feature_vector(features, amount, training_stats):
     """
     Build the full feature vector that our models expect.
-    This must apply the same feature engineering as training, using
-    the SAME training stats for normalization. Otherwise, the model
-    won't know how to interpret the new data. This is a common source of
-    "training-serving skew" bugs in real systems.
+    
+    This replicates the same feature engineering from data.py,
+    but for a single transaction instead of a whole DataFrame.
+    The models were trained on these exact features, so we must
+    produce them in the same way.
     """
     row = dict(features)  # copy V1-V28
     row['Amount'] = amount
@@ -109,20 +115,24 @@ def build_feature_vector(features, amount, training_stats):
 
 
 def score_transaction(xgb_model, ae_model, scaler, ae_stats, feature_vector):
-    """
-    Run both models and combine their scores.
-    """
     # XGBoost: get fraud probability
     xgb_score = xgb_model.predict_proba(feature_vector)[:, 1][0]
 
     # Autoencoder: get reconstruction error
     ae_error = compute_reconstruction_error(ae_model, scaler, feature_vector)[0]
 
-    # Normalize autoencoder error to roughly 0-1 range using the
-    # 95th percentile of legitimate errors from training. Errors at
-    # or below this percentile are "normal" (score near 0), errors
-    # far above it are anomalous (score near or above 1).
-    ae_score = min(ae_error / ae_stats['legit_error_95th'], 1.0)
+    # Normalize autoencoder error to 0-1 using the actual error distribution.
+    # We map the range [legit_mean, fraud_median] to [0, 1].
+    # Errors at the legit mean score ~0 (normal), errors at the fraud
+    # median score ~1 (anomalous). This uses the full dynamic range
+    # instead of clamping everything above a low threshold to 1.0.
+    low = ae_stats['legit_error_mean']
+    high = ae_stats['fraud_error_median']
+    if high > low:
+        ae_score = (ae_error - low) / (high - low)
+        ae_score = max(0.0, min(1.0, ae_score))
+    else:
+        ae_score = 0.0
 
     # Combine: 70% XGBoost, 30% autoencoder
     combined = 0.7 * xgb_score + 0.3 * ae_score
@@ -133,7 +143,17 @@ def score_transaction(xgb_model, ae_model, scaler, ae_stats, feature_vector):
 def make_decision(combined_score):
     """
     Apply tiered thresholds to make the final decision.
-    These thresholds can be tuned based on validation performance
+    
+    In production, these tiers would trigger different actions:
+      BLOCK:   reject the transaction outright
+      REVIEW:  send a text/push notification to the cardholder
+      ALLOW:   let it through silently
+    
+    Args:
+        combined_score: ensemble fraud score (0 to 1)
+    
+    Returns:
+        decision string and risk level
     """
     if combined_score >= 0.7:
         return 'BLOCK', 'HIGH'
@@ -147,9 +167,6 @@ def consume(max_messages=None):
     """
     Main consumer loop. Reads from the stream and processes
     transactions until stopped or max_messages is reached.
-    
-    Args:
-        max_messages: stop after this many (None = run forever)
     """
     r = get_redis()
     setup_stream(r)
@@ -279,6 +296,7 @@ def consume(max_messages=None):
             print(f"  Fraud caught (blocked): {fraud_caught} / {actual_fraud} = {fraud_caught/actual_fraud*100:.1f}%")
         if blocked > 0:
             print(f"  False blocks: {false_blocks} / {blocked}")
+
 
 if __name__ == '__main__':
     consume(max_messages=50)
